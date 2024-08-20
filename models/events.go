@@ -3,36 +3,23 @@ package models
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/daffaabiyyuatha/fgh21-go-event-organizer/lib"
 	"github.com/jackc/pgx/v5"
 )
 
-type User struct {
-	Id       int     `json:"id" db:"id"`
-	Email    string  `json:"email" form:"email" db:"email"`
-	Password string  `json:"-" form:"password" db:"password"`
-	Username *string `json:"username" form:"username" db:"username"`
+type Events struct {
+	Id          int       `json:"id" db:"id"`
+	Image       *string   `json:"image" form:"image" db:"image"`
+	Title       *string   `json:"title" form:"title" db:"title"`
+	Date        time.Time `json:"date" form:"date" db:"date"`
+	Description *string   `json:"description" form:"description" db:"description"`
+	Location_id *int      `json:"location_id" form:"location_id" db:"location_id"`
+	Created_by  *int      `json:"created_by" form:"created_by" db:"created_by"`
 }
 
-type StructChangePassword struct {
-	Password string `json:"-" form:"password" db:"password"`
-}
-
-func Total(search string) int {
-	db := lib.DB()
-	defer db.Close(context.Background())
-
-	sql := `SELECT count(id) as "total" FROM "users" where "email" ilike '%' || $1 || '%'`
-	rows := db.QueryRow(context.Background(), sql, search)
-	var results int
-	rows.Scan(
-		&results,
-	)
-	return results
-}
-
-func FindAllUsers(search string, limit int, page int) ([]User, int) {
+func FindAllEvents(search string, limit int, page int) ([]Events, int) {
 	db := lib.DB()
 
 	defer db.Close(context.Background())
@@ -41,51 +28,77 @@ func FindAllUsers(search string, limit int, page int) ([]User, int) {
 
 	rows, _ := db.Query(
 		context.Background(),
-		`select "id", "email", "password", "username" from "users" where "email" ilike '%' || $1 || '%' limit $2 offset $3`, search, limit, offset,
+		`select * from "events" where "title" ilike '%' || $1 || '%' limit $2 offset $3`, search, limit, offset,
 	)
 
-	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[User])
+	event, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Events])
 
 	if err != nil {
 		fmt.Println(err)
 	}
 	result := Total(search)
 
-	return users, result
+	return event, result
 }
 
-func FindOneUser(id int) User {
+func FindOneEvent(id int) Events {
 	db := lib.DB()
 	defer db.Close(context.Background())
 
 	rows, _ := db.Query(
 		context.Background(),
-		`select "id", "email", "password", "username" from "users"`,
+		`select "id", "image", "title", "date", "description", "location_id", "created_by" from "events"`,
 	)
 
-	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[User])
+	events, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Events])
 
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	user := User{}
-	for _, v := range users {
+	event := Events{}
+	for _, v := range events {
 		if v.Id == id {
-			user = v
+			event = v
 		}
 	}
+	fmt.Println(event)
 
-	return user
+	return event
 }
 
-func DeleteUser(id int) error {
+// func FindOneUserByEmail(email string) User {
+// 	db := lib.DB()
+// 	defer db.Close(context.Background())
+
+// 	rows, _ := db.Query(
+// 		context.Background(),
+// 		`select "id", "email", "password","username" from "users"`,
+// 	)
+
+// 	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[User])
+
+// 	if err != nil {
+// 		fmt.Println(err)
+// 	}
+
+// 	user := User{}
+// 	for _, v := range users {
+// 		if v.Email == email {
+// 			user = v
+// 		}
+// 	}
+
+// 	return user
+// }
+
+func DeleteEvent(id int) error {
 	db := lib.DB()
 	defer db.Close(context.Background())
 
 	commandTag, err := db.Exec(
 		context.Background(),
-		`DELETE FROM "users" WHERE id = $1`,
+		`DELETE FROM "events" WHERE id = $1`,
 		id,
 	)
 
@@ -100,73 +113,32 @@ func DeleteUser(id int) error {
 	return nil
 }
 
-func CreateUser(user User) (*User, error) {
+func CreateEvents(event Events, id int) error {
 	db := lib.DB()
 	defer db.Close(context.Background())
 
-	user.Password = lib.Encrypt(user.Password)
-
-	var users User
-
-	err := db.QueryRow(
+	_, err := db.Exec(
 		context.Background(),
-		`INSERT INTO "users" (email, "password", username) VALUES ($1, $2, $3) returning id, email`,
-		user.Email, user.Password, user.Username,
-	).Scan(&users.Id, &users.Email)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute insert")
-	}
-
-	return &users, nil
-}
-
-func EditUser(email string, username string, password string, id string) {
-	db := lib.DB()
-	defer db.Close(context.Background())
-
-	dataSql := `update "users" set (email , username, password) = ($1, $2, $3) where id=$4`
-
-	db.Exec(context.Background(), dataSql, email, username, password, id)
-
-}
-
-func FindOneUserByEmail(email string) User {
-	db := lib.DB()
-	defer db.Close(context.Background())
-
-	rows, _ := db.Query(
-		context.Background(),
-		`select "id", "email", "password","username" from "users"`,
+		`INSERT INTO "events" ("image", "title", "date", "description", "location_id", "created_by") VALUES ($1, $2, $3, $4, $5, $6)`,
+		event.Image, event.Title, event.Date, event.Description, event.Location_id, id,
 	)
-
-	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[User])
+	fmt.Println(err)
 
 	if err != nil {
-		fmt.Println(err)
-	}
-
-	user := User{}
-	for _, v := range users {
-		if v.Email == email {
-			user = v
-		}
-	}
-
-	return user
-}
-func ChangePassword(password string, id int) error {
-	db := lib.DB()
-	defer db.Close(context.Background())
-	editPassword := lib.Encrypt(password)
-
-	dataSql := `UPDATE "users" SET password = $1 WHERE id = $2`
-	_, err := db.Exec(context.Background(), dataSql, editPassword, id)
-	if err != nil {
-		return fmt.Errorf("failed to update password: %v", err)
+		return fmt.Errorf("failed to execute insert")
 	}
 
 	return nil
+}
+
+func EditEvent(image string, title string, date string, description string, location_id int, created_by int, id string) {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	dataSql := `update "events" set ("image", "title", "date", "description", "location_id", "created_by") = ($1, $2, $3, $4, $5, $6) where id=$7`
+
+	db.Exec(context.Background(), dataSql, image, title, date, description, location_id, created_by, id)
+
 }
 
 // package models
