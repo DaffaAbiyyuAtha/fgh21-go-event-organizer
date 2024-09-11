@@ -309,6 +309,9 @@ func DeleteUserById(ctx *gin.Context) {
 func UpdatePassword(ctx *gin.Context) {
 	id := ctx.GetInt("userId")
 	pass := models.StructChangePassword{}
+	var user models.User
+	found := models.FindOneUserByEmail(user.Email)
+
 	if err := ctx.ShouldBind(&pass); err != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,
@@ -316,18 +319,49 @@ func UpdatePassword(ctx *gin.Context) {
 		})
 		return
 	}
-	err := models.ChangePassword(pass.Password, id)
+
+	isVerified := lib.Verify(user.Password, found.Password)
+	fmt.Println(isVerified)
+	if isVerified {
+		err := models.ChangePassword(pass.Password, id)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, lib.Server{
+				Success: false,
+				Message: "Wrong Password",
+			})
+			return
+		}
+	} else {
+		ctx.JSON(http.StatusOK, lib.Server{
+			Success: true,
+			Message: " Update Successfully",
+		})
+	}
+}
+
+func UpdateUser(ctx *gin.Context) {
+	id := ctx.GetInt("userId")
+	users := models.User{}
+	err := ctx.Bind(&users)
+	if err := ctx.ShouldBind(&users); err != nil {
+		ctx.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Invalid input data",
+		})
+
+		return
+	}
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,
-			Message: "failed Update Password",
+			Message: "Failed to update profile",
 		})
 		return
 	}
-
+	models.UpdateUser(users, id)
 	ctx.JSON(http.StatusOK, lib.Server{
 		Success: true,
-		Message: "Password Successfully updated",
+		Message: "Profile successfully updated",
 	})
 }

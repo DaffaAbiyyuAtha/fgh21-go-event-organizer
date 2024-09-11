@@ -3,20 +3,19 @@ package models
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/daffaabiyyuatha/fgh21-go-event-organizer/lib"
 	"github.com/jackc/pgx/v5"
 )
 
 type Events struct {
-	Id          int       `json:"id" db:"id"`
-	Image       *string   `json:"image" form:"image" db:"image"`
-	Title       *string   `json:"title" form:"title" db:"title"`
-	Date        time.Time `json:"date" form:"date" db:"date"`
-	Description *string   `json:"description" form:"description" db:"description"`
-	Location_id *int      `json:"location_id" form:"location_id" db:"location_id"`
-	Created_by  *int      `json:"created_by" form:"created_by" db:"created_by"`
+	Id          int     `json:"id" db:"id"`
+	Image       *string `json:"image" form:"image" db:"image"`
+	Title       *string `json:"title" form:"title" db:"title"`
+	Date        string  `json:"date" form:"date" db:"date"`
+	Description *string `json:"description" form:"description" db:"description"`
+	Location_id *int    `json:"location_id" form:"location_id" db:"location_id"`
+	Created_by  *int    `json:"created_by" form:"created_by" db:"created_by"`
 }
 
 func FindAllEvents(search string, limit int, page int) ([]Events, int) {
@@ -65,6 +64,26 @@ func FindOneEvent(id int) Events {
 	fmt.Println(event)
 
 	return event
+}
+
+func FindEventByUserId(id int) []Events {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	rows, err := db.Query(
+		context.Background(),
+		`select * from "events" where "created_by" = $1`, id,
+	)
+	if err != nil {
+		fmt.Println(err)
+	}
+	events, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Events])
+
+	if err != nil {
+		fmt.Errorf("Error")
+	}
+
+	return events
 }
 
 // func FindOneUserByEmail(email string) User {

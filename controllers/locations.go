@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -28,5 +29,23 @@ func SeeAllLocations(ctx *gin.Context) {
 		Success: true,
 		Message: "List All Locations",
 		Results: result,
+	})
+}
+func ListAllFilterProductsWithPagination(c *gin.Context) {
+	location := c.Query("location")
+	locations, err := models.GetAllEventWithFilter(location)
+	fmt.Println(err)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Location Not Found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, lib.Server{
+		Success: true,
+		Message: "List All Location with Filter",
+		Results: locations,
 	})
 }

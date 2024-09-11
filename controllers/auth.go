@@ -25,6 +25,7 @@ func AuthLogin(ctx *gin.Context) {
 			Success: false,
 			Message: "Wrong Email or Password",
 		})
+		return
 	}
 
 	isVerified := lib.Verify(user.Password, found.Password)
@@ -53,6 +54,7 @@ func AuthProfile(ctx *gin.Context) {
 		return
 	}
 	profile, err := models.CreateProfile(account)
+	fmt.Println(profile)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

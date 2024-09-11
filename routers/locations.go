@@ -7,4 +7,5 @@ import (
 
 func LocationRouter(routerGroup *gin.RouterGroup) {
 	routerGroup.GET("/", controllers.SeeAllLocations)
+	routerGroup.GET("/events", controllers.ListAllFilterProductsWithPagination)
 }

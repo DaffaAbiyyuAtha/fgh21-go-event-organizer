@@ -8,6 +8,7 @@ import (
 
 func main() {
 	r := gin.Default()
+	r.Static("/picture", "./picture")
 	// r.Use(corsMiddleware())
 
 	corsConfig := cors.DefaultConfig()
@@ -19,7 +20,7 @@ func main() {
 
 	routers.RouterCombine(r)
 
-	r.Run("localhost:8080")
+	r.Run("0.0.0.0:8080")
 }
 
 // func corsMiddleware() gin.HandlerFunc {

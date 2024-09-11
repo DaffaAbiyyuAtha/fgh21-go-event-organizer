@@ -9,11 +9,12 @@ import (
 func EventRouter(routerGroup *gin.RouterGroup) {
 	routerGroup.GET("/", controllers.SeeAllEvent)
 	routerGroup.GET("/section/:id", controllers.SeeOneEventByEventId)
-	routerGroup.POST("/", controllers.CreateEvent)
 	routerGroup.GET("/:id", controllers.SeeOneEventById)
 	// routerGroup.POST("/auth/login", controllers.Login)
 	routerGroup.PATCH("/:id", controllers.EditEvent)
 	routerGroup.DELETE("/:id", controllers.DeleteEventById)
 	routerGroup.GET("/payment_method", controllers.ListAllPaymentMethod)
 	routerGroup.Use(middlewares.AuthMiddleware())
+	routerGroup.POST("/update", controllers.CreateEvent)
+	routerGroup.GET("/see_one_event", controllers.SeeOneEventByUserId)
 }

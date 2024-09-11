@@ -9,6 +9,7 @@ import (
 func TransactionsRouter(routerGroup *gin.RouterGroup) {
 	routerGroup.Use(middlewares.AuthMiddleware())
 	routerGroup.GET("/:id", controllers.FindTransactionByUserId)
-	routerGroup.POST("/:id", controllers.CreateTransaction)
+	routerGroup.POST("/", controllers.CreateTransaction)
 	routerGroup.GET("/", controllers.ListDetailsTransactions)
+	routerGroup.GET("/payment/", controllers.ListProductById)
 }

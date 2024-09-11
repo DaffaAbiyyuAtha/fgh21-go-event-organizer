@@ -11,4 +11,6 @@ func ProfileRouter(routerGroup *gin.RouterGroup) {
 	routerGroup.POST("/", controllers.CreateProfiles)
 	// routerGroup.GET("/", controllers.ListAllProfile)
 	routerGroup.GET("/", controllers.SeeOneProfileByUserId)
+	routerGroup.PATCH("/update", controllers.UpdateProfile)
+	routerGroup.PATCH("/picture", controllers.UpdateProfilePicture)
 }

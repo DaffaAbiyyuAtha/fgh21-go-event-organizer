@@ -3,10 +3,13 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/daffaabiyyuatha/fgh21-go-event-organizer/lib"
 	"github.com/daffaabiyyuatha/fgh21-go-event-organizer/models"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // func CreateProfiles(ctx *gin.Context) {
@@ -116,5 +119,129 @@ func ListAllProfile(r *gin.Context) {
 		Success: true,
 		Message: "List All Profile",
 		Results: results,
+	})
+}
+
+// func UpdateProfile(ctx *gin.Context) {
+// 	id := ctx.GetInt("userId")
+// 	profiles := models.Profile{}
+// 	if err := ctx.ShouldBind(&profiles); err != nil {
+// 		ctx.JSON(http.StatusBadRequest, lib.Server{
+// 			Success: false,
+// 			Message: "Invalid input data",
+// 		})
+// 		return
+// 	}
+// 	err := models.UpdateProfile(profiles.Full_name, *profiles.Phone_number, profiles.Profession, id)
+
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadRequest, lib.Server{
+// 			Success: false,
+// 			Message: "failed Update Password",
+// 		})
+// 		return
+// 	}
+
+// 	ctx.JSON(http.StatusOK, lib.Server{
+// 		Success: true,
+// 		Message: "Password Successfully updated",
+// 	})
+// }
+
+func UpdateProfile(ctx *gin.Context) {
+	id := ctx.GetInt("userId")
+	profiles := models.Profile{}
+	users := models.User{}
+	err := ctx.Bind(&profiles)
+	errr := ctx.Bind(&users)
+	dataProfile := models.FindProfileByUserId(id)
+	dataUser := models.FindOneUser(id)
+	fmt.Println(dataUser, "uuyuyuyuyuyu")
+	if err := ctx.ShouldBind(&profiles); err != nil {
+		ctx.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Invalid input data",
+		})
+
+		return
+	}
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Failed to update profile",
+		})
+		return
+	}
+
+	if errr != nil {
+		ctx.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Failed to update users",
+		})
+		return
+	}
+
+	models.UpdateProfile(profiles, id)
+	models.UpdateUser(users, id)
+	ctx.JSON(http.StatusOK, lib.Server{
+		Success: true,
+		Message: "Profile successfully updated",
+		Results: gin.H{
+			"profile": dataProfile,
+			"user":    dataUser,
+		},
+	})
+}
+
+func UpdateProfilePicture(c *gin.Context) {
+	id := c.GetInt("userId")
+
+	file, err := c.FormFile("picture")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "No file",
+		})
+		return
+	}
+
+	cek := map[string]bool{".jpg": true, ".png": true, ".jpeg": true}
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if !cek[ext] {
+		c.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Failed to Upload File",
+		})
+		return
+	}
+
+	picture := uuid.New().String() + ext
+
+	savePicture := "./picture/"
+	if err := c.SaveUploadedFile(file, savePicture+picture); err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Failed to Save File",
+		})
+		return
+	}
+
+	root := "http://localhost:8080/picture/" + picture
+
+	profile, err := models.UpdateProfilePicture(models.Profile{Picture: &root}, id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Faileded to Save File",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, lib.Server{
+		Success: true,
+		Message: "Profile picture updated successfully",
+		Results: profile,
 	})
 }

@@ -110,11 +110,13 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type Transaction struct {
-	Id                int `json:"id" db:"id"`
-	Event_id          int `json:"event_id" form:"event_id" db:"event_id"`
-	Payment_method_id int `json:"payment_method_id" form:"payment_method_id" db:"payment_method_id"`
-	User_id           int `json:"user_id" form:"user_id" db:"user_id"`
+type Transactions struct {
+	Id             int   `json:"id"`
+	EventId        int   `json:"eventId" form:"eventId" db:"event_id"`
+	PaymentId      int   `json:"paymentId" form:"paymentId" db:"payment_method_id"`
+	UserId         int   `json:"userId"  db:"user_id"`
+	SectionId      []int `json:"sectionId,omitempty" form:"sectionId" db:"section_id"`
+	TicketQuantity []int `json:"ticketQuantity,omitempty" form:"ticketQuantity" db:"ticket_qty"`
 }
 
 type DetailTransaction struct {
@@ -127,24 +129,31 @@ type DetailTransaction struct {
 	Section_name      []string  `json:"section_name" form:"section_name" db:"section_id"`
 	Ticket_qty        []int     `json:"ticket_qty" form:"ticket_qty" db:"ticket_qty"`
 }
+type FindOneTransaction struct {
+	Id       int    `json:"id"`
+	Title    string `json:"title"`
+	Date     string `json:"date"`
+	Location string `json:"location"`
+	Payment  string `json:"payment"`
+}
 
-func CreateNewTransactions(data Transaction) (Transaction, error) {
+func CreateNewTransactions(data Transactions) (Transactions, error) {
 	db := lib.DB()
 	defer db.Close(context.Background())
 
 	sql := `INSERT INTO "transactions" ("event_id", "payment_method_id", "user_id") 
 	        VALUES ($1, $2, $3) RETURNING "id", "event_id", "payment_method_id", "user_id"`
 
-	var results Transaction
-	err := db.QueryRow(context.Background(), sql, data.Event_id, data.Payment_method_id, data.User_id).Scan(
+	var results Transactions
+	err := db.QueryRow(context.Background(), sql, data.EventId, data.PaymentId, data.UserId).Scan(
 		&results.Id,
-		&results.Event_id,
-		&results.Payment_method_id,
-		&results.User_id,
+		&results.EventId,
+		&results.PaymentId,
+		&results.UserId,
 	)
 	fmt.Println(err)
 	if err != nil {
-		return Transaction{}, fmt.Errorf("failed to create transaction: %v", err)
+		return Transactions{}, fmt.Errorf("failed to create transaction: %v", err)
 	}
 
 	return results, nil
@@ -156,7 +165,7 @@ func AddDetailsTransaction() ([]DetailTransaction, error) {
 
 	sql := `
 		SELECT t.id, p.full_name, e.title AS "event_title", e.location_id, e.date, pm.name AS "payment_method",
-		       ARRAY_AGG(es.name) AS "section_name", ARRAY_AGG(td.ticket_qty) AS "ticket_qty"
+		ARRAY_AGG(es.name) AS "section_name", ARRAY_AGG(td.ticket_qty) AS "ticket_qty"
 		FROM "transactions" t
 		JOIN "users" u ON u.id = t.user_id
 		JOIN "profile" p ON p.user_id = u.id
@@ -181,7 +190,7 @@ func AddDetailsTransaction() ([]DetailTransaction, error) {
 	return details, nil
 }
 
-func FindAllTransactionByUserId(userId int) ([]Transaction, error) {
+func FindAllTransactionByUserId(userId int) ([]Transactions, error) {
 	db := lib.DB()
 	defer db.Close(context.Background())
 
@@ -192,7 +201,40 @@ func FindAllTransactionByUserId(userId int) ([]Transaction, error) {
 	}
 	defer rows.Close()
 
-	transactions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Transaction])
+	transactions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Transactions])
+	if err != nil {
+		return nil, fmt.Errorf("failed to collect transactions: %v", err)
+	}
+
+	return transactions, nil
+}
+
+func FindOneTransactionById(userId int) ([]FindOneTransaction, error) {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	sql := `
+		SELECT "t"."id", "e"."title", "e"."date", "l"."name" AS "location", "pm"."name" AS "payment"
+		FROM "transactions" "t"
+		JOIN "users" "u"
+		ON "u"."id" = "t"."user_id"
+		JOIN "events" "e"
+		ON "e"."id" = "t"."event_id"
+		JOIN "payment_methods" "pm"
+		ON "pm"."id" = "t"."payment_method_id"
+		JOIN "locations" "l"
+		ON "l"."id" = "e"."location_id"
+		WHERE "u"."id" = $1
+		ORDER BY "t"."id" DESC
+	`
+
+	rows, err := db.Query(context.Background(), sql, userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find transactions: %v", err)
+	}
+	defer rows.Close()
+
+	transactions, err := pgx.CollectRows(rows, pgx.RowToStructByPos[FindOneTransaction])
 	if err != nil {
 		return nil, fmt.Errorf("failed to collect transactions: %v", err)
 	}

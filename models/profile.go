@@ -9,11 +9,11 @@ import (
 )
 
 type Profile struct {
-	Id             int     `json:"id" db:"id"`
+	Id             int     `json:"id"`
 	Picture        *string `json:"picture" form:"picture" db:"picture"`
 	Full_name      string  `json:"full_name" form:"full_name" db:"full_name"`
 	Birth_date     *string `json:"birth_date," form:"birth_date" db:"birth_date"`
-	Gender         *int    `json:"gender" form:"gender"`
+	Gender         *int    `json:"gender" form:"gender" db:"gender"`
 	Phone_number   *string `json:"phone_number" form:"phone_number" db:"phone_number"`
 	Profession     *string `json:"profession" form:"profession"`
 	Nationality_id *int    `json:"nationality_id" form:"nationality_id" db:"nationality_id"`
@@ -27,94 +27,6 @@ type Regist struct {
 	Profile  Profile
 }
 
-// func CreateProfile(profile Profile) error {
-// 	db := lib.DB()
-// 	defer db.Close(context.Background())
-
-// 	_, err := db.Exec(
-// 		context.Background(),
-// 		`INSERT INTO "users" ("picture", "full_name", "birth_date", "gender", "phone_number", "profession", "nationality_id", "user_id") VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-// 		profile.Picture, profile.Full_name, profile.Birth_date, profile.Gender, profile.Phone_number, profile.Profession, profile.Nationality_id, profile.User_id,
-// 	)
-
-// 	if err != nil {
-// 		return fmt.Errorf("failed to execute insert")
-// 	}
-
-// 	return nil
-// }
-
-// func FindProfileByUserId(user_id int) Profile {
-// 	db := lib.DB()
-// 	defer db.Close(context.Background())
-
-// 	rows, _ := db.Query(
-// 		context.Background(),
-// 		`select "u"."id", "u"."email", "u"."password", "u"."username", "p"."picture", "p"."full_name", "p"."birth_date", "p"."gender", "p"."phone_number", "p"."profession", "p"."nationality_id", "p"."user_id" from "users" "u"
-// 		join "profile" "p" on "p".user_id = "u"."id"`,
-// 	)
-
-// 	profiles, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Profile])
-
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}
-
-// 	profile := Profile{}
-// 	for _, v := range profiles {
-// 		if v.Id == user_id {
-// 			profile = v
-// 		}
-// 	}
-
-// 	return profile
-// }
-
-// func CreateProfile(profile Profile) error {
-// 	db := lib.DB()
-// 	defer db.Close(context.Background())
-
-// 	_, err := db.Exec(
-// 		context.Background(),
-// 		`INSERT INTO "profile" ("picture", "full_name", "birth_date", "gender", "phone_number", "profession", "nationality_id", "user_id") VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-// 		profile.Picture, profile.Full_name, profile.Birth_date, profile.Gender, profile.Phone_number, profile.Profession, profile.Nationality_id, profile.User_id,
-// 	)
-
-// 	if err != nil {
-// 		return fmt.Errorf("failed to execute insert: %v", err)
-// 	}
-
-// 	return nil
-// }
-
-// func FindProfileByUserId(user_id int) Profile {
-// 	db := lib.DB()
-// 	defer db.Close(context.Background())
-
-// 	rows, err := db.Query(
-// 		context.Background(),
-// 		`select "p"."id", "p"."picture", "p"."full_name", "p"."birth_date", "p"."gender", "p"."phone_number", "p"."profession", "p"."nationality_id", "p"."user_id"
-// 		from "profile" "p"
-// 		join "users" "u" on "p".user_id = "u"."id"
-// 		where "u"."id" = $1`, user_id,
-// 	)
-
-// 	if err != nil {
-// 		fmt.Println("Query error:", err)
-// 	}
-
-// 	profiles, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Profile])
-// 	if err != nil {
-// 		fmt.Println("CollectRows error:", err)
-// 	}
-
-// 	if len(profiles) > 0 {
-// 		return profiles[0]
-// 	}
-
-// 	return Profile{}
-// }
-
 func CreateProfile(regist Regist) (*Profile, error) {
 	db := lib.DB()
 	defer db.Close(context.Background())
@@ -124,7 +36,7 @@ func CreateProfile(regist Regist) (*Profile, error) {
 	var userId int
 	err := db.QueryRow(
 		context.Background(),
-		`INSERT INTO "users" ("email", "password") VALUES ($1, $2) RETURNING "id"`,
+		`INSERT INTO "users" ("email", "password") VALUES ($1 ,$2) RETURNING "id"`,
 		regist.Email, regist.Password,
 	).Scan(&userId)
 
@@ -206,4 +118,36 @@ func FindAllProfile() []Profile {
 		fmt.Println(err)
 	}
 	return profile
+}
+
+func UpdateProfile(data Profile, id int) error {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	dataSql := `UPDATE "profile" SET "picture" = $1, "full_name" = $2, "birth_date" = $3, "gender" = $4, "phone_number" = $5, "profession" = $6, "nationality_id" = $7 WHERE "user_id" = $8`
+	_, err := db.Exec(context.Background(), dataSql, data.Picture, data.Full_name, data.Birth_date, data.Gender, data.Phone_number, data.Profession, data.Nationality_id, id)
+	if err != nil {
+		return fmt.Errorf("failed to update profile: %v", err)
+	}
+
+	return nil
+}
+
+func UpdateProfilePicture(data Profile, id int) (Profile, error) {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	sql := `UPDATE "profile" SET "picture" = $1 WHERE "user_id" = $2 RETURNING id, picture, user_id`
+
+	row, err := db.Query(context.Background(), sql, data.Picture, id)
+	if err != nil {
+		return Profile{}, nil
+	}
+
+	profile, err := pgx.CollectOneRow(row, pgx.RowToStructByName[Profile])
+	if err != nil {
+		return Profile{}, nil
+	}
+
+	return profile, nil
 }

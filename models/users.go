@@ -16,7 +16,8 @@ type User struct {
 }
 
 type StructChangePassword struct {
-	Password string `json:"-" form:"password" db:"password"`
+	OldPassword string `json:"-" form:"oldPassword"`
+	Password    string `json:"-" form:"password" db:"password"`
 }
 
 func Total(search string) int {
@@ -164,6 +165,32 @@ func ChangePassword(password string, id int) error {
 	_, err := db.Exec(context.Background(), dataSql, editPassword, id)
 	if err != nil {
 		return fmt.Errorf("failed to update password: %v", err)
+	}
+
+	return nil
+}
+
+// func UpdateProfile(data Profile, id int) error {
+// 	db := lib.DB()
+// 	defer db.Close(context.Background())
+
+// 	dataSql := `UPDATE "profile" SET "picture" = $1, "full_name" = $2, "birth_date" = $3, "gender" = $4, "phone_number" = $5, "profession" = $6, "nationality_id" = $7 WHERE "user_id" = $8`
+// 	_, err := db.Exec(context.Background(), dataSql, data.Picture, data.Full_name, data.Birth_date, data.Gender, data.Phone_number, data.Profession, data.Nationality_id, id)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to update profile: %v", err)
+// 	}
+
+// 	return nil
+// }
+
+func UpdateUser(data User, id int) error {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	dataSql := `UPDATE "users" SET "username" = $1, "email" = $2 WHERE "id" = $3`
+	_, err := db.Exec(context.Background(), dataSql, data.Username, data.Email, id)
+	if err != nil {
+		return fmt.Errorf("failed to update profile: %v", err)
 	}
 
 	return nil

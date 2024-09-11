@@ -92,6 +92,12 @@
 // 	})
 
 // }
+// type FormTransactions struct {
+// 	Event_id          int   `json:"event_id" form:"event_id" db:"event_id"`
+// 	Payment_method_id int   `json:"payment_method_id" form:"payment_method_id" db:"payment_method_id"`
+// 	Section_id        []int `json:"section_id" form:"section_id" db:"section_id"`
+// 	Ticket_qty        []int `json:"ticket_qty" form:"ticket_qty" db:"ticket_qty"`
+// }
 
 package controllers
 
@@ -105,69 +111,47 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type FormTransactions struct {
-	Event_id          int   `json:"event_id" form:"event_id" db:"event_id"`
-	Payment_method_id int   `json:"payment_method_id" form:"payment_method_id" db:"payment_method_id"`
-	Section_id        []int `json:"section_id" form:"section_id" db:"section_id"`
-	Ticket_qty        []int `json:"ticket_qty" form:"ticket_qty" db:"ticket_qty"`
-}
-
 func CreateTransaction(ctx *gin.Context) {
-	form := FormTransactions{}
-	id, _ := strconv.Atoi(ctx.Param("id"))
-	userId := ctx.GetInt("userId")
-	fmt.Println(userId)
+	form := models.Transactions{}
+	// id := ctx.GetInt("userId")
 	if err := ctx.ShouldBind(&form); err != nil {
-		ctx.JSON(http.StatusBadRequest, lib.Server{
-			Success: false,
-			Message: "invalid input data",
-		})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	trx, err := models.CreateNewTransactions(models.Transaction{
-		User_id:           userId,
-		Payment_method_id: form.Payment_method_id,
-		Event_id:          id,
+	fmt.Println(&form)
+	trx, err := models.CreateNewTransactions(models.Transactions{
+		UserId:    ctx.GetInt("userId"),
+		PaymentId: form.PaymentId,
+		EventId:   form.EventId,
 	})
-	fmt.Println(err)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, lib.Server{
-			Success: false,
-			Message: "failed to create transaction",
-		})
-		return
-	}
-
-	for i := range form.Section_id {
-		_, err := models.CreateTransactionDetail(models.TransactionDetail{
-			SectionId:     form.Section_id[i],
-			TicketQty:     form.Ticket_qty[i],
+	for i := range form.SectionId {
+		models.CreateTransactionDetail(models.TransactionDetail{
 			TransactionId: trx.Id,
+			SectionId:     form.SectionId[i],
+			TicketQty:     form.TicketQuantity[i],
 		})
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, lib.Server{
-				Success: false,
-				Message: "failed to create transaction detail",
-			})
-			return
+			fmt.Println("Error creating transaction detail: ", err)
+		} else {
+			fmt.Println("Transaction detail created for SectionId: ", form.SectionId[i])
 		}
 	}
-
 	details, err := models.AddDetailsTransaction()
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, lib.Server{
+	fmt.Println("Details returned:", details)
+	if err != nil || len(details) == 0 {
+		ctx.JSON(http.StatusNotFound, lib.Server{
 			Success: false,
-			Message: "transaction details not found",
+			Message: "Transaction details not found or empty",
 		})
 		return
 	}
+	ctx.JSON(http.StatusOK,
+		lib.Server{
+			Success: true,
+			Message: "Create Transaction success",
+			Results: details,
+		})
 
-	ctx.JSON(http.StatusOK, lib.Server{
-		Success: true,
-		Message: "transaction created successfully",
-		Results: details,
-	})
 }
 
 func ListDetailsTransactions(ctx *gin.Context) {
@@ -210,5 +194,24 @@ func FindTransactionByUserId(ctx *gin.Context) {
 		Success: true,
 		Message: "transaction found",
 		Results: data,
+	})
+}
+
+func ListProductById(c *gin.Context) {
+	id := c.GetInt("userId")
+	selected, err := models.FindOneTransactionById(id)
+	fmt.Println(err)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "invalid user ID",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, lib.Server{
+		Success: true,
+		Message: "transaction found",
+		Results: selected,
 	})
 }

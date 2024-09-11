@@ -17,7 +17,7 @@ func SeeAllEvent(ctx *gin.Context) {
 	page, _ := strconv.Atoi(ctx.Query("page"))
 
 	if limit < 1 {
-		limit = 10
+		limit = 20
 	}
 
 	if page < 1 {
@@ -77,11 +77,13 @@ func SeeOneEventById(ctx *gin.Context) {
 }
 
 func CreateEvent(ctx *gin.Context) {
+	idaaa := ctx.GetInt("userId")
 	newEvent := models.Events{}
-	// result := models.FindAllEvents()
-	id, _ := ctx.Get("userId")
+	err := ctx.Bind(&newEvent)
 
-	if err := ctx.ShouldBind(&newEvent); err != nil {
+	// result := models.FindAllEvents()
+	fmt.Println(err)
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,
 			Message: "Invalid input data",
@@ -95,18 +97,30 @@ func CreateEvent(ctx *gin.Context) {
 	// }
 	// newEvent.Id = ids + 1
 
-	err := models.CreateEvents(newEvent, id.(int))
-	if err != nil {
+	errr := models.CreateEvents(newEvent, idaaa)
+	if errr != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,
-			Message: "Failed to create event",
+			Message: "Failed to Create Event",
 		})
 		return
 	}
 	ctx.JSON(http.StatusOK, lib.Server{
 		Success: true,
-		Message: "User created successfully",
+		Message: "Event created successfully",
 		Results: newEvent,
+	})
+}
+
+func SeeOneEventByUserId(ctx *gin.Context) {
+	id := ctx.GetInt("userId")
+	fmt.Println(id)
+	dataEvent := models.FindEventByUserId(id)
+
+	ctx.JSON(http.StatusOK, lib.Server{
+		Success: true,
+		Message: "Event Found",
+		Results: dataEvent,
 	})
 }
 
