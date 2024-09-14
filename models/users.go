@@ -15,6 +15,10 @@ type User struct {
 	Username *string `json:"username" form:"username" db:"username"`
 }
 
+type Passwords struct {
+	Password string `json:"-"`
+}
+
 type StructChangePassword struct {
 	OldPassword string `json:"-" form:"oldPassword"`
 	Password    string `json:"-" form:"password" db:"password"`
@@ -194,6 +198,27 @@ func UpdateUser(data User, id int) error {
 	}
 
 	return nil
+}
+
+func FindPasswordById(id int) (Passwords, error) {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	sql := `SELECT password FROM users WHERE id=$1`
+
+	row, err := db.Query(context.Background(), sql, id)
+
+	fmt.Println("1", err)
+	if err != nil {
+		return Passwords{}, err
+	}
+	user, err := pgx.CollectOneRow(row, pgx.RowToStructByPos[Passwords])
+
+	fmt.Println("2", err)
+	if err != nil {
+		return Passwords{}, err
+	}
+	return user, nil
 }
 
 // package models

@@ -309,9 +309,16 @@ func DeleteUserById(ctx *gin.Context) {
 func UpdatePassword(ctx *gin.Context) {
 	id := ctx.GetInt("userId")
 	pass := models.StructChangePassword{}
-	var user models.User
-	found := models.FindOneUserByEmail(user.Email)
-
+	// var user models.User
+	found, err := models.FindPasswordById(id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+	fmt.Println(found)
 	if err := ctx.ShouldBind(&pass); err != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,
@@ -319,22 +326,26 @@ func UpdatePassword(ctx *gin.Context) {
 		})
 		return
 	}
-
-	isVerified := lib.Verify(user.Password, found.Password)
+	fmt.Println(pass.OldPassword)
+	isVerified := lib.Verify(pass.OldPassword, found.Password)
 	fmt.Println(isVerified)
 	if isVerified {
 		err := models.ChangePassword(pass.Password, id)
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, lib.Server{
-				Success: false,
-				Message: "Wrong Password",
+			ctx.JSON(http.StatusOK, lib.Server{
+				Success: true,
+				Message: "Change password is Successfully",
 			})
 			return
 		}
-	} else {
 		ctx.JSON(http.StatusOK, lib.Server{
 			Success: true,
 			Message: " Update Successfully",
+		})
+	} else {
+		ctx.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Wrong Password",
 		})
 	}
 }
