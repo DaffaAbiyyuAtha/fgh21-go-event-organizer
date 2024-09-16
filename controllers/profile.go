@@ -156,7 +156,6 @@ func UpdateProfile(ctx *gin.Context) {
 	errr := ctx.Bind(&users)
 	dataProfile := models.FindProfileByUserId(id)
 	dataUser := models.FindOneUser(id)
-	fmt.Println(dataUser, "uuyuyuyuyuyu")
 	if err := ctx.ShouldBind(&profiles); err != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,
