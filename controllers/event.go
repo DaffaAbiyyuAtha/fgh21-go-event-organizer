@@ -193,3 +193,23 @@ func DeleteEventById(ctx *gin.Context) {
 		Results: dataEvent,
 	})
 }
+
+func ListAllFilterEvents(c *gin.Context) {
+	event := c.Query("event")
+
+	events, err := models.GetAllEventWithFilters(event)
+	fmt.Println(err)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Id Not Found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, lib.Server{
+		Success: true,
+		Message: "Events Has Been Filtered",
+		Results: events,
+	})
+}

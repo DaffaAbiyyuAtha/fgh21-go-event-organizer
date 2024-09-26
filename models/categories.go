@@ -13,6 +13,15 @@ type Category struct {
 	Name string `json:"name" form:"name" db:"name"`
 }
 
+type JCategory struct {
+	Id          int    `json:"id"`
+	Image       string `json:"image" form:"image"`
+	Title       string `json:"title" form:"title"`
+	Date        string `json:"date" form:"date"`
+	Description string `json:"description" form:"description"`
+	Categories  string `json:"categories" form:"categories"`
+}
+
 func FindAllCategories(search string, limit int, page int) []Category {
 	db := lib.DB()
 
@@ -104,4 +113,33 @@ func EditCategory(name string, id string) {
 
 	db.Exec(context.Background(), dataSql, name, id)
 
+}
+
+func GetAllCategoryWithFilter(category string) ([]JCategory, error) {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	sql := `
+		select "e"."id", "e"."image", "e"."title", "e"."date", "e"."description", "c"."name" AS "categories"
+		FROM "event_categories" "ec"
+		INNER JOIN "events" "e"
+		ON "ec"."event_id" = "e"."id"
+		INNER JOIN "categories" "c"
+		ON "ec"."category_id" = "c"."id"
+		WHERE "c"."name" ILIKE $1
+	`
+
+	rows, err := db.Query(context.Background(), sql, "%"+category+"%")
+
+	if err != nil {
+		return []JCategory{}, err
+	}
+
+	categories, err := pgx.CollectRows(rows, pgx.RowToStructByPos[JCategory])
+
+	if err != nil {
+		return []JCategory{}, err
+	}
+
+	return categories, err
 }

@@ -8,6 +8,7 @@ import (
 
 func EventRouter(routerGroup *gin.RouterGroup) {
 	routerGroup.GET("/", controllers.SeeAllEvent)
+	routerGroup.GET("/filter", controllers.ListAllFilterEvents)
 	routerGroup.GET("/section/:id", controllers.SeeOneEventByEventId)
 	routerGroup.GET("/:id", controllers.SeeOneEventById)
 	// routerGroup.POST("/auth/login", controllers.Login)

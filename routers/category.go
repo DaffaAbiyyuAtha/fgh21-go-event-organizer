@@ -8,6 +8,7 @@ import (
 func CategoryRouter(routerGroup *gin.RouterGroup) {
 	// routerGroup.Use(middlewares.AuthMiddleware())
 	routerGroup.POST("/", controllers.CreateCategory)
+	routerGroup.GET("/filter", controllers.ListAllFilterCategory)
 	routerGroup.GET("/", controllers.SeeAllCategories)
 	routerGroup.GET("/:id", controllers.SeeOneCategoryById)
 	routerGroup.PATCH("/:id", controllers.EditCategory)

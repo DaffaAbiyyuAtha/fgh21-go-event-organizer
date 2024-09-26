@@ -86,31 +86,6 @@ func FindEventByUserId(id int) []Events {
 	return events
 }
 
-// func FindOneUserByEmail(email string) User {
-// 	db := lib.DB()
-// 	defer db.Close(context.Background())
-
-// 	rows, _ := db.Query(
-// 		context.Background(),
-// 		`select "id", "email", "password","username" from "users"`,
-// 	)
-
-// 	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[User])
-
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}
-
-// 	user := User{}
-// 	for _, v := range users {
-// 		if v.Email == email {
-// 			user = v
-// 		}
-// 	}
-
-// 	return user
-// }
-
 func DeleteEvent(id int) error {
 	db := lib.DB()
 	defer db.Close(context.Background())
@@ -160,103 +135,27 @@ func EditEvent(image string, title string, date string, description string, loca
 
 }
 
-// package models
+func GetAllEventWithFilters(event string) ([]Events, error) {
+	db := lib.DB()
+	defer db.Close(context.Background())
 
-// import (
-// 	"context"
-// 	"fmt"
+	sql := `
+		SELECT * FROM "events"
+		WHERE "title" ILIKE $1
+		ORDER BY "id" DESC
+	`
 
-// 	"github.com/daffaabiyyuatha/fgh21-go-event-organizer/lib"
-// 	"github.com/jackc/pgx/v5"
-// )
+	rows, err := db.Query(context.Background(), sql, "%"+event+"%")
 
-// type Users struct {
-// 	Id       int    `json:"id"`
-// 	Username string `json:"username" form:"username" binding:"required"`
-// 	Email    string `json:"email" form:"email" binding:"required"`
-// 	Password string `json:"-" form:"password" binding:"required,min=8"`
-// }
+	if err != nil {
+		return []Events{}, err
+	}
 
-// var dataUser = []Users{
-// 	{Id: 1, Username: "Admin", Email: "admin@mail.com", Password: "1234"},
-// }
+	events, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Events])
 
-// func GetAllUsers() []Users {
-// 	// data := dataUser
+	if err != nil {
+		return []Events{}, err
+	}
 
-// 	// return data
-// 	db := lib.DB()
-// 	defer db.Close(context.Background())
-
-// 	rows, _ := db.Query(
-// 		context.Background(),
-// 		`select * from "users"`,
-// 	)
-
-// 	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Users])
-
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}
-// 	return users
-// }
-
-// func GetOneUserById(id int) Users {
-// 	data := dataUser
-
-// 	user := Users{}
-// 	for _, item := range data {
-// 		if id == item.Id {
-// 			user = item
-// 		}
-// 	}
-// 	return user
-// }
-
-// func CreateUser(data Users) Users {
-// 	id := 0
-// 	for _, ids := range dataUser {
-// 		id = ids.Id
-// 	}
-
-// 	data.Id = id + 1
-// 	dataUser = append(dataUser, data)
-
-// 	return data
-// }
-
-// func DeleteDataById(id int) Users {
-// 	index := -1
-// 	userDelete := Users{}
-// 	for ids, item := range dataUser {
-// 		if item.Id == id {
-// 			index = ids
-// 			userDelete = item
-// 		}
-// 	}
-// 	if userDelete.Id != 0 {
-// 		dataUser = append(dataUser[:index], dataUser[index+1:]...)
-// 	}
-
-// 	return userDelete
-// }
-
-// func UpdateDataById(data Users, id int) Users {
-
-// 	ids := -1
-
-// 	for index, item := range dataUser {
-// 		if id == item.Id {
-// 			ids = index
-// 		}
-// 	}
-
-// 	if ids == 0 {
-// 		dataUser[ids].Username = data.Username
-// 		dataUser[ids].Email = data.Email
-// 		dataUser[ids].Password = data.Password
-// 		data.Id = dataUser[ids].Id
-// 	}
-
-// 	return data
-// }
+	return events, err
+}

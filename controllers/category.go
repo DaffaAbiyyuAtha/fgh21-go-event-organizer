@@ -161,3 +161,23 @@ func DeleteCategoryById(ctx *gin.Context) {
 		Results: dataCategory,
 	})
 }
+
+func ListAllFilterCategory(c *gin.Context) {
+	category := c.Query("category")
+
+	products, err := models.GetAllCategoryWithFilter(category)
+	fmt.Println(err)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Id Not Found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, lib.Server{
+		Success: true,
+		Message: "Category Has Been Filtered",
+		Results: products,
+	})
+}
