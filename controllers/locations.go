@@ -16,7 +16,7 @@ func SeeAllLocations(ctx *gin.Context) {
 	page, _ := strconv.Atoi(ctx.Query("page"))
 
 	if limit < 1 {
-		limit = 7
+		limit = 100
 	}
 
 	if page < 1 {

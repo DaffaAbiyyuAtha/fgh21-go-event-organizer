@@ -2,7 +2,7 @@ insert into "categories" (
 	"name"
 )
 values
-	('All')
+	('All'),
     ('Music'),
 	('Art'),
 	('Outdoors'),
