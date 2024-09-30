@@ -25,6 +25,7 @@ type Regist struct {
 	Email    string `json:"email" form:"email" db:"email"`
 	Password string `json:"-" form:"password" db:"password"`
 	Profile  Profile
+	RoleUser int `json:"roleUser" form:"roleUser" db:"user_role"`
 }
 
 func CreateProfile(regist Regist) (*Profile, error) {
@@ -36,8 +37,8 @@ func CreateProfile(regist Regist) (*Profile, error) {
 	var userId int
 	err := db.QueryRow(
 		context.Background(),
-		`INSERT INTO "users" ("email", "password") VALUES ($1 ,$2) RETURNING "id"`,
-		regist.Email, regist.Password,
+		`INSERT INTO "users" ("email", "password", "user_role") VALUES ($1 ,$2 ,$3) RETURNING "id"`,
+		regist.Email, regist.Password, regist.RoleUser,
 	).Scan(&userId)
 
 	if err != nil {

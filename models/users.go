@@ -13,6 +13,7 @@ type User struct {
 	Email    string  `json:"email" form:"email" db:"email"`
 	Password string  `json:"-" form:"password" db:"password"`
 	Username *string `json:"username" form:"username" db:"username"`
+	UserRole int     `json:"userRole" form:"userRole" db:"user_role"`
 }
 
 type Passwords struct {
@@ -142,7 +143,7 @@ func FindOneUserByEmail(email string) User {
 
 	rows, _ := db.Query(
 		context.Background(),
-		`select "id", "email", "password","username" from "users"`,
+		`select "id", "email", "password", "username", "user_role" from "users"`,
 	)
 
 	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[User])
