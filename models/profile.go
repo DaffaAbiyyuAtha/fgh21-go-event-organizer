@@ -37,7 +37,7 @@ func CreateProfile(regist Regist) (*Profile, error) {
 	var userId int
 	err := db.QueryRow(
 		context.Background(),
-		`INSERT INTO "users" ("email", "password", "user_role") VALUES ($1 ,$2 ,$3) RETURNING "id"`,
+		`INSERT INTO "users" ("email", "password", "user_role") VALUES ($1 ,$2 ,$3) RETURNING "id", "email", "password", "user_role"`,
 		regist.Email, regist.Password, regist.RoleUser,
 	).Scan(&userId)
 
