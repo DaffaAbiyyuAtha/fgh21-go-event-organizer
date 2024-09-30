@@ -101,7 +101,15 @@ func SeeOneProfileByUserId(ctx *gin.Context) {
 	id := ctx.GetInt("userId")
 	fmt.Println(id)
 	dataProfile := models.FindProfileByUserId(id)
-	dataUser := models.FindOneUser(id)
+	dataUser, err := models.FindOneUser(id)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "User Not Found",
+		})
+		return
+	}
 
 	ctx.JSON(http.StatusOK, lib.Server{
 		Success: true,
@@ -155,7 +163,16 @@ func UpdateProfile(ctx *gin.Context) {
 	err := ctx.Bind(&profiles)
 	errr := ctx.Bind(&users)
 	dataProfile := models.FindProfileByUserId(id)
-	dataUser := models.FindOneUser(id)
+	dataUser, err := models.FindOneUser(id)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "User Not Found",
+		})
+		return
+	}
+
 	if err := ctx.ShouldBind(&profiles); err != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,

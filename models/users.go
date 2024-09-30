@@ -60,29 +60,25 @@ func FindAllUsers(search string, limit int, page int) ([]User, int) {
 	return users, result
 }
 
-func FindOneUser(id int) User {
+func FindOneUser(id int) (User, error) {
 	db := lib.DB()
 	defer db.Close(context.Background())
 
-	rows, _ := db.Query(
-		context.Background(),
-		`select "id", "email", "password", "username" from "users"`,
-	)
+	sql := `select "id", "email", "password", "username", "user_role" from "users" where id = $1`
 
-	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[User])
+	query, err := db.Query(context.Background(), sql, id)
 
 	if err != nil {
-		fmt.Println(err)
+		return User{}, err
 	}
 
-	user := User{}
-	for _, v := range users {
-		if v.Id == id {
-			user = v
-		}
+	users, err := pgx.CollectOneRow(query, pgx.RowToStructByPos[User])
+
+	if err != nil {
+		return User{}, err
 	}
 
-	return user
+	return users, err
 }
 
 func DeleteUser(id int) error {

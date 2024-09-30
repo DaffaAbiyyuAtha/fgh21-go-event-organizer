@@ -177,11 +177,17 @@ func SeeAllUsers(ctx *gin.Context) {
 
 func SeeOneUserById(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
-	dataUser := models.FindOneUser(id)
-	fmt.Println(dataUser)
+	dataUser, err := models.FindOneUser(id)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "User Not Found",
+		})
+		return
+	}
 
 	if dataUser.Id != 0 {
-
 		ctx.JSON(http.StatusOK, lib.Server{
 			Success: true,
 			Message: "User Found",
@@ -280,12 +286,21 @@ func CreateUser(ctx *gin.Context) {
 
 func DeleteUserById(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
-	dataUser := models.FindOneUser(id)
 
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,
 			Message: "Invalid user ID",
+		})
+		return
+	}
+
+	dataUser, err := models.FindOneUser(id)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "User Not Found",
 		})
 		return
 	}
