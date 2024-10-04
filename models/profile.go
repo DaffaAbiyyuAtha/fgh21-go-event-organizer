@@ -37,7 +37,8 @@ func CreateProfile(regist Regist) (*Profile, error) {
 	var userId int
 	err := db.QueryRow(
 		context.Background(),
-		`INSERT INTO "users" ("email", "password", "user_role") VALUES ($1 ,$2 ,$3) RETURNING "id", "email", "password", "user_role"`,
+		`INSERT INTO "users" ("email", "password", "user_role") 
+		VALUES ($1, $2, $3) RETURNING "id"`,
 		regist.Email, regist.Password, regist.RoleUser,
 	).Scan(&userId)
 
@@ -151,4 +152,46 @@ func UpdateProfilePicture(data Profile, id int) (Profile, error) {
 	}
 
 	return profile, nil
+}
+
+func FindOneProfile(id int) (Profile, error) {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	sql := `select * from "profile" where id = $1`
+
+	query, err := db.Query(context.Background(), sql, id)
+
+	if err != nil {
+		return Profile{}, err
+	}
+
+	Profiles, err := pgx.CollectOneRow(query, pgx.RowToStructByPos[Profile])
+
+	if err != nil {
+		return Profile{}, err
+	}
+
+	return Profiles, err
+}
+
+func DeleteProfileById(id int) (string, error) {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	sql := `DELETE FROM profile WHERE id=$1 RETURNING id`
+
+	row, err := db.Query(context.Background(), sql, id)
+
+	if err != nil {
+		return "", err
+	}
+
+	result, err := pgx.CollectOneRow(row, pgx.RowTo[string])
+
+	if err != nil {
+		return "", err
+	}
+
+	return result, nil
 }

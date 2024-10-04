@@ -286,30 +286,28 @@ func CreateUser(ctx *gin.Context) {
 
 func DeleteUserById(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
-
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,
-			Message: "Invalid user ID",
+			Message: "Invalid user ID format",
 		})
 		return
 	}
 
 	dataUser, err := models.FindOneUser(id)
-
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, lib.Server{
+		ctx.JSON(http.StatusNotFound, lib.Server{
 			Success: false,
 			Message: "User Not Found",
 		})
 		return
 	}
 
-	err = models.DeleteUser(id)
+	_, err = models.DeleteUserById(id)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, lib.Server{
+		ctx.JSON(http.StatusInternalServerError, lib.Server{
 			Success: false,
-			Message: "Id Not Found",
+			Message: "Failed to delete user",
 		})
 		return
 	}
@@ -324,7 +322,6 @@ func DeleteUserById(ctx *gin.Context) {
 func UpdatePassword(ctx *gin.Context) {
 	id := ctx.GetInt("userId")
 	pass := models.StructChangePassword{}
-	// var user models.User
 	found, err := models.FindPasswordById(id)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
@@ -391,3 +388,65 @@ func UpdateUser(ctx *gin.Context) {
 		Message: "Profile successfully updated",
 	})
 }
+
+func ListAllFilterUsersWithPagination(c *gin.Context) {
+	search := c.Query("search")
+	page, _ := strconv.Atoi(c.Query("page"))
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 5
+	}
+	products, err := models.FindAllUsersWithPagination(search, page, limit)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Failed to find profile",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, lib.Server{
+		Success: true,
+		Message: "List Users",
+		Results: products,
+	})
+}
+
+// func UpdateRoleUser(ctx *gin.Context) {
+// 	id := ctx.GetInt("userId")
+
+// 	var user models.User
+// 	if err := ctx.ShouldBindJSON(&user); err != nil {
+// 		ctx.JSON(http.StatusBadRequest, lib.Server{
+// 			Success: false,
+// 			Message: "Invalid input data",
+// 		})
+// 		return
+// 	}
+
+// 	adminId := ctx.GetInt("adminId")
+
+// 	var adminUser models.User
+// 	if err := models.FindUserById(adminId, &adminUser); err != nil || adminUser.UserRole != 1 {
+// 		ctx.JSON(http.StatusForbidden, lib.Server{
+// 			Success: false,
+// 			Message: "Only admin can update the user role",
+// 		})
+// 		return
+// 	}
+
+// 	if err := models.UpdateUser(user, id); err != nil {
+// 		ctx.JSON(http.StatusInternalServerError, lib.Server{
+// 			Success: false,
+// 			Message: "Failed to update user profile",
+// 		})
+// 		return
+// 	}
+
+// 	ctx.JSON(http.StatusOK, lib.Server{
+// 		Success: true,
+// 		Message: "Profile successfully updated",
+// 	})
+// }

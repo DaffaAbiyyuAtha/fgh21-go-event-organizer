@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/daffaabiyyuatha/fgh21-go-event-organizer/lib"
@@ -259,5 +260,40 @@ func UpdateProfilePicture(c *gin.Context) {
 		Success: true,
 		Message: "Profile picture updated successfully",
 		Results: profile,
+	})
+}
+
+func DeleteProfileById(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Invalid profile ID format",
+		})
+		return
+	}
+
+	dataUser, err := models.FindOneProfile(id)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, lib.Server{
+			Success: false,
+			Message: "User Not Found",
+		})
+		return
+	}
+
+	_, err = models.DeleteProfileById(id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, lib.Server{
+			Success: false,
+			Message: "Failed to delete profile",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, lib.Server{
+		Success: true,
+		Message: "Profile deleted successfully",
+		Results: dataUser,
 	})
 }

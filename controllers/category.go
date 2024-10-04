@@ -146,7 +146,7 @@ func DeleteCategoryById(ctx *gin.Context) {
 		return
 	}
 
-	err = models.DeleteUser(id)
+	_, err = models.DeleteUserById(id)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,

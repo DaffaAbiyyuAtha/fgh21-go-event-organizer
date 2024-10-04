@@ -7,6 +7,7 @@ import (
 )
 
 func ProfileRouter(routerGroup *gin.RouterGroup) {
+	routerGroup.DELETE("/:id", controllers.DeleteProfileById)
 	routerGroup.Use(middlewares.AuthMiddleware())
 	routerGroup.POST("/", controllers.CreateProfiles)
 	// routerGroup.GET("/", controllers.ListAllProfile)
