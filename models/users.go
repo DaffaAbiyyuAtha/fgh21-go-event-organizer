@@ -16,6 +16,15 @@ type User struct {
 	UserRole int     `json:"userRole" form:"userRole" db:"user_role"`
 }
 
+type JUser struct {
+	Id       int     `json:"id" db:"id"`
+	Email    string  `json:"email" form:"email" db:"email"`
+	Password string  `json:"-" form:"password" db:"password"`
+	Username *string `json:"username" form:"username" db:"username"`
+	UserRole int     `json:"userRole" form:"userRole" db:"user_role"`
+	FullName string  `json:"fullName" form:"fullName" db:"full_name"`
+}
+
 type Passwords struct {
 	Password string `json:"-"`
 }
@@ -203,27 +212,29 @@ func FindPasswordById(id int) (Passwords, error) {
 	return user, nil
 }
 
-func FindAllUsersWithPagination(search string, page int, limit int) ([]User, error) {
+func FindAllUsersWithPagination(search string, page int, limit int) ([]JUser, error) {
 	db := lib.DB()
 	defer db.Close(context.Background())
 	var offset int = (page - 1) * limit
 
-	sql := `select "id", "email", "password", "username", "user_role" 
-		from "users" 
-		where "email" ilike $1
+	sql := `select "u"."id", "u"."email", "u"."password", "u"."username", "u"."user_role", "p"."full_name"
+		from "users" "u"
+		join "profile" "p"
+		on "u"."id" = "p"."user_id"
+		where "p"."full_name" ilike $1
 		ORDER BY "id" ASC
 		limit $2 offset $3`
 
 	rows, err := db.Query(context.Background(), sql, "%"+search+"%", limit, offset)
 
 	if err != nil {
-		return []User{}, err
+		return []JUser{}, err
 	}
 
-	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[User])
+	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[JUser])
 
 	if err != nil {
-		return []User{}, err
+		return []JUser{}, err
 	}
 
 	return users, err
