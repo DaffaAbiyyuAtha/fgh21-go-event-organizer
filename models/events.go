@@ -107,22 +107,24 @@ func DeleteEvent(id int) error {
 	return nil
 }
 
-func CreateEvents(event Events, id int) error {
+func CreateEvents(event Events, id int) (int, error) {
 	db := lib.DB()
 	defer db.Close(context.Background())
 
-	_, err := db.Exec(
+	var newEventID int
+
+	// Menambahkan RETURNING untuk mendapatkan ID event yang baru dibuat
+	err := db.QueryRow(
 		context.Background(),
-		`INSERT INTO "events" ("image", "title", "date", "description", "location_id", "created_by") VALUES ($1, $2, $3, $4, $5, $6)`,
+		`INSERT INTO "events" ("image", "title", "date", "description", "location_id", "created_by") VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
 		event.Image, event.Title, event.Date, event.Description, event.Location_id, id,
-	)
-	fmt.Println(err)
+	).Scan(&newEventID) // Mengambil nilai ID yang baru dimasukkan
 
 	if err != nil {
-		return fmt.Errorf("failed to execute insert")
+		return 0, fmt.Errorf("failed to execute insert: %v", err)
 	}
 
-	return nil
+	return newEventID, nil
 }
 
 func EditEvent(image string, title string, date string, description string, location_id int, created_by int, id string) {

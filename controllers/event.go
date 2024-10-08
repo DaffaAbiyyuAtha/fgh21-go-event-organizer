@@ -81,8 +81,6 @@ func CreateEvent(ctx *gin.Context) {
 	newEvent := models.Events{}
 	err := ctx.Bind(&newEvent)
 
-	// result := models.FindAllEvents()
-	fmt.Println(err)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,
@@ -91,13 +89,8 @@ func CreateEvent(ctx *gin.Context) {
 		return
 	}
 
-	// ids := 0
-	// for _, v := range result {
-	// 	ids = v.Id
-	// }
-	// newEvent.Id = ids + 1
-
-	errr := models.CreateEvents(newEvent, idaaa)
+	// Mengubah variabel errr untuk menangkap ID event yang baru dibuat
+	newEventID, errr := models.CreateEvents(newEvent, idaaa)
 	if errr != nil {
 		ctx.JSON(http.StatusBadRequest, lib.Server{
 			Success: false,
@@ -105,10 +98,15 @@ func CreateEvent(ctx *gin.Context) {
 		})
 		return
 	}
+
+	// Mengembalikan ID event yang baru dibuat
 	ctx.JSON(http.StatusOK, lib.Server{
 		Success: true,
 		Message: "Event created successfully",
-		Results: newEvent,
+		Results: gin.H{
+			"event":   newEvent,
+			"eventId": newEventID,
+		},
 	})
 }
 
