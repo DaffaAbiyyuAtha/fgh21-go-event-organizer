@@ -11,12 +11,12 @@ func main() {
 	r.Static("/picture", "./picture")
 	// r.Use(corsMiddleware())
 
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = true
-	corsConfig.AllowHeaders = []string{
-		"Origin", "Content-Type", "Authorization", "Content-Length",
-	}
-	r.Use(cors.New(corsConfig))
+	// corsConfig := cors.DefaultConfig()
+	// corsConfig.AllowAllOrigins = true
+	// corsConfig.AllowHeaders = []string{
+	// 	"Origin", "Content-Type", "Authorization", "Content-Length",
+	// }
+	r.Use(cors.Default())
 
 	routers.RouterCombine(r)
 
