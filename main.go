@@ -8,7 +8,6 @@ import (
 
 func main() {
 	r := gin.Default()
-	r.Static("/picture", "./picture")
 	// r.Use(corsMiddleware())
 
 	// corsConfig := cors.DefaultConfig()
@@ -16,7 +15,16 @@ func main() {
 	// corsConfig.AllowHeaders = []string{
 	// 	"Origin", "Content-Type", "Authorization", "Content-Length",
 	// }
-	r.Use(cors.Default())
+	// r.Use(cors.New(corsConfig))
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"PUT", "PATCH", "POST", "GET", "OPTIONS", "DELETE", "HEAD"},
+		AllowHeaders:     []string{"*"},
+		AllowCredentials: true,
+	}))
+
+	r.Static("/picture", "./picture")
 
 	routers.RouterCombine(r)
 
