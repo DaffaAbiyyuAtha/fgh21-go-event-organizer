@@ -13,6 +13,7 @@ func EventRouter(routerGroup *gin.RouterGroup) {
 	routerGroup.GET("/:id", controllers.SeeOneEventById)
 	// routerGroup.POST("/auth/login", controllers.Login)
 	routerGroup.PATCH("/:id", controllers.EditEvent)
+	routerGroup.PATCH("/image/:id", controllers.UpdateEventPicture)
 	routerGroup.DELETE("/:id", controllers.DeleteEventById)
 	routerGroup.GET("/payment_method", controllers.ListAllPaymentMethod)
 	routerGroup.Use(middlewares.AuthMiddleware())

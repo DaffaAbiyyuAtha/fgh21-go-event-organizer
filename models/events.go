@@ -161,3 +161,22 @@ func GetAllEventWithFilters(event string) ([]Events, error) {
 
 	return events, err
 }
+
+func UpdateEventPicture(data Events, id int) (Events, error) {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	sql := `UPDATE "events" SET "image" = $1 WHERE "id" = $2 RETURNING id, image`
+
+	row, err := db.Query(context.Background(), sql, data.Image, id)
+	if err != nil {
+		return Events{}, nil
+	}
+
+	event, err := pgx.CollectOneRow(row, pgx.RowToStructByName[Events])
+	if err != nil {
+		return Events{}, nil
+	}
+
+	return event, nil
+}

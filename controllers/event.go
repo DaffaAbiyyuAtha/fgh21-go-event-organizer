@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"github.com/daffaabiyyuatha/fgh21-go-event-organizer/lib"
 	"github.com/daffaabiyyuatha/fgh21-go-event-organizer/models"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func SeeAllEvent(ctx *gin.Context) {
@@ -209,5 +211,48 @@ func ListAllFilterEvents(c *gin.Context) {
 		Success: true,
 		Message: "Events Has Been Filtered",
 		Results: events,
+	})
+}
+
+func UpdateEventPicture(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	fmt.Println("keempat")
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "No file",
+		})
+		return
+	}
+	fmt.Println("pertama")
+	savePicture := "./picture/"
+	picture := uuid.New().String() + filepath.Ext(file.Filename)
+
+	if err := c.SaveUploadedFile(file, savePicture+picture); err != nil {
+		fmt.Println("Path untuk menyimpan gambar:", savePicture+picture)
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, lib.Server{
+			Success: false,
+			Message: "Failed to Save File",
+		})
+		return
+	}
+	fmt.Println("kedua")
+	imageURL := "http://localhost:8080/picture/" + picture
+
+	event, err := models.UpdateEventPicture(models.Events{Image: &imageURL}, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, lib.Server{
+			Success: false,
+			Message: "Failed to update event picture",
+		})
+		return
+	}
+	fmt.Println("ketiga")
+	c.JSON(http.StatusOK, lib.Server{
+		Success: true,
+		Message: "Event picture updated successfully",
+		Results: event,
 	})
 }
