@@ -239,7 +239,7 @@ func UpdateEventPicture(c *gin.Context) {
 		return
 	}
 	fmt.Println("kedua")
-	imageURL := "http://localhost:8080/picture/" + picture
+	imageURL := "http://103.93.58.89:21211/picture/" + picture
 
 	event, err := models.UpdateEventPicture(models.Events{Image: &imageURL}, id)
 	if err != nil {

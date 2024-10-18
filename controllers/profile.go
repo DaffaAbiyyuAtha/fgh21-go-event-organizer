@@ -245,7 +245,7 @@ func UpdateProfilePicture(c *gin.Context) {
 		return
 	}
 
-	root := "http://localhost:8080/picture/" + picture
+	root := "http://103.93.58.89:21211/picture/" + picture
 
 	profile, err := models.UpdateProfilePicture(models.Profile{Picture: &root}, id)
 	if err != nil {
