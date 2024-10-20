@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/daffaabiyyuatha/fgh21-go-event-organizer/lib"
+	"github.com/jackc/pgx/v5"
 )
 
 type Sactions struct {
@@ -55,32 +56,31 @@ type Sactions struct {
 // 	return saction, nil
 // }
 
-func CreateSaction(saction Sactions) ([]int, error) {
-	db := lib.DB()
-	defer db.Close(context.Background())
+// func CreateSaction(saction Sactions) ([]int, error) {
+// 	db := lib.DB()
+// 	defer db.Close(context.Background())
 
-	var sactionIDs []int // Menyimpan id yang berhasil diinsert
+// 	var sactionIDs []int // Menyimpan id yang berhasil diinsert
 
-	for i := 0; i < len(saction.Name); i++ {
-		sql := `INSERT INTO "event_sections" ("name", "price", "quantity", "event_id")
-                VALUES ($1, $2, $3, $4) RETURNING id`
+// 	for i := 0; i < len(saction.Name); i++ {
+// 		sql := `INSERT INTO "event_sections" ("name", "price", "quantity", "event_id")
+//                 VALUES ($1, $2, $3, $4) RETURNING id`
 
-		// Log the values to help debug
-		fmt.Printf("Inserting: name=%s, price=%d, quantity=%d, event_id=%d\n",
-			saction.Name[i], saction.Price[i], saction.Quantity[i], saction.EventId)
+// 		fmt.Printf("Inserting: name=%s, price=%d, quantity=%d, event_id=%d\n",
+// 			saction.Name[i], saction.Price[i], saction.Quantity[i], saction.EventId)
 
-		var id int
-		err := db.QueryRow(context.Background(), sql, saction.Name[i], saction.Price[i], saction.Quantity[i], saction.EventId).Scan(&id)
-		if err != nil {
-			fmt.Println("QueryRow error:", err) // Log the error for debugging
-			return nil, err
-		}
+// 		var id int
+// 		err := db.QueryRow(context.Background(), sql, saction.Name[i], saction.Price[i], saction.Quantity[i], saction.EventId).Scan(&id)
+// 		if err != nil {
+// 			fmt.Println("QueryRow error:", err)
+// 			return nil, err
+// 		}
 
-		sactionIDs = append(sactionIDs, id) // Append each id to the list
-	}
+// 		sactionIDs = append(sactionIDs, id)
+// 	}
 
-	return sactionIDs, nil
-}
+// 	return sactionIDs, nil
+// }
 
 // func CreateSaction(saction Sactions) ([]Sactions, error) {
 // 	db := lib.DB()
@@ -101,3 +101,36 @@ func CreateSaction(saction Sactions) ([]int, error) {
 
 // 	return []Sactions{createdSaction}, nil
 // }
+
+func CreateSaction(saction Sactions) ([]int, error) {
+	db := lib.DB()
+	defer db.Close(context.Background())
+
+	var sactionIDs []int // Menyimpan id yang berhasil diinsert
+
+	for i := 0; i < len(saction.Name); i++ {
+		sql := `INSERT INTO "event_sections" ("name", "price", "quantity", "event_id")
+                VALUES ($1, $2, $3, $4) RETURNING id`
+
+		fmt.Printf("Inserting: name=%s, price=%d, quantity=%d, event_id=%d\n",
+			saction.Name[i], saction.Price[i], saction.Quantity[i], saction.EventId)
+
+		// Menjalankan query dan mengumpulkan hasilnya
+		row, err := db.Query(context.Background(), sql, saction.Name[i], saction.Price[i], saction.Quantity[i], saction.EventId)
+		if err != nil {
+			fmt.Println("Query error:", err)
+			return nil, err
+		}
+
+		// Mengambil ID yang diinsert
+		id, err := pgx.CollectOneRow(row, pgx.RowTo[int])
+		if err != nil {
+			fmt.Println("CollectOneRow error:", err)
+			return nil, err
+		}
+
+		sactionIDs = append(sactionIDs, id)
+	}
+
+	return sactionIDs, nil
+}
